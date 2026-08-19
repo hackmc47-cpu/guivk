@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gửi vợ yêu ❤️</title>
+    <style>
+        /* ===== RESET ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; overflow: hidden; height: 100vh; background-color: #0d0d1a; }
+        
+        .screen { display: none; width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
+        .active { display: flex; justify-content: center; align-items: center; z-index: 10; }
+        
+        /* ===== MÀN 1: GIAO DIỆN CHÀO ===== */
+        #screen1 { background-image: url('dfg.png'); background-size: cover; background-position: center; }
+        .glass-card { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); padding: 30px 40px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.3); text-align: center; color: white; text-shadow: 0 0 15px #000; box-shadow: 0 0 50px rgba(0,0,0,0.8); max-width: 90%; }
+        .glass-card h1 { font-size: 26px; margin-bottom: 10px; color: #ffccd5; }
+        #btnStart { margin-top: 20px; padding: 15px 50px; font-size: 22px; border-radius: 40px; background: linear-gradient(45deg, #ff4d6d, #ff758f); border: none; color: white; cursor: pointer; box-shadow: 0 0 20px #ff4d6d; transition: 0.3s; }
+        #btnStart:hover { transform: scale(1.05); }
+        
+        /* ===== MÀN 2: TRÁI TIM (NÚT TÁCH ĐÔI) ===== */
+        #screen2 { background: #0d0d1a; }
+        #heartCanvasContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        #heartCanvasContainer canvas { display: block; width: 100%; height: 100%; }
+        
+        .overlay-content { position: absolute; z-index: 10; width: 100%; height: 100%; top: 0; left: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .overlay-content h1 { color: white; font-size: 40px; text-shadow: 0 0 20px #ff4d6d; margin-bottom: 40px; }
+        
+        /* === THIẾT KẾ NÚT TÁCH ĐÔI === */
+        .btn-wrapper {
+            position: relative;
+            width: 220px;
+            height: 60px;
+            border-radius: 50px;
+            background: #ffffff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+        }
+        .btn-yes {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background: transparent;
+            color: #ff4d6d;
+            border: none;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+        .btn-yes:hover { transform: scale(1.05); color: #d6003b; }
+        .btn-no {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background: #111;
+            color: #ccc;
+            border: none;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            border-radius: 50px;
+            z-index: 3;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+        
+        /* ===== MÀN 3: KÝ TÊN ===== */
+        #screen3 { background-image: url('dfg.png'); background-size: cover; background-position: center; flex-direction: column; }
+        #signCanvas { background: #fff; border-radius: 15px; touch-action: none; margin-top: 10px; max-width: 90%; }
+        #btnDone { display: none; margin-top: 20px; padding: 12px 40px; font-size: 18px; border-radius: 30px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+        
+        /* ===== MÀN 4: CÂU HỎI TỰ LUẬN ===== */
+        #screen4 { background-image: url('dfg.png'); background-size: cover; background-position: center; overflow-y: auto; align-items: flex-start; padding: 20px; display: none; }
+        #screen4.active { display: flex; }
+        .exam-container { background: rgba(20, 20, 20, 0.9); backdrop-filter: blur(5px); padding: 20px; border-radius: 20px; max-width: 900px; width: 100%; margin: 20px auto; color: white; border: 1px solid #444; }
+        .question-box { margin-bottom: 25px; border-bottom: 1px solid #555; padding-bottom: 15px; }
+        .question-box:last-child { border-bottom: none; }
+        .code-block { background: #1e1e1e; padding: 10px; border-radius: 8px; font-family: monospace; color: #00ff00; margin: 10px 0; overflow-x: auto; white-space: pre-wrap; }
+        .answer-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px; }
+        .answer-group { display: flex; gap: 5px; align-items: center; background: #2a2a2a; padding: 5px 10px; border-radius: 8px; flex: 1; min-width: 150px; }
+        .answer-group label { font-weight: bold; color: #ddd; font-size: 12px; }
+        .answer-group input { background: #1e1e1e; border: 1px solid #555; border-radius: 4px; padding: 4px 8px; color: white; width: 100%; font-size: 13px; }
+        .answer-group input:focus { border-color: #ff4d6d; outline: none; }
+        #submitExamBtn { width: 100%; padding: 15px; margin-top: 10px; border-radius: 30px; background: linear-gradient(45deg, #ff4d6d, #ff758f); border: none; color: white; font-size: 20px; font-weight: bold; cursor: pointer; }
+        
+        /* ===== MÀN 5: CHỜ CHẤM ĐIỂM ===== */
+        #screen5 { background-image: url('dfg.png'); background-size: cover; background-position: center; }
+        .waiting-box { background: rgba(20, 20, 20, 0.85); backdrop-filter: blur(5px); padding: 40px; border-radius: 30px; text-align: center; color: white; border: 1px solid #ff4d6d; max-width: 90%; }
+        .waiting-box h1 { color: #ff4d6d; font-size: 32px; margin-bottom: 15px; }
+        .waiting-box p { font-size: 18px; margin-bottom: 10px; }
+        .score-display { font-size: 60px; color: #ffccd5; font-weight: bold; margin-top: 20px; display: none; text-shadow: 0 0 20px #ff4d6d; }
+        
+        /* ===== TOAST ===== */
+        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 20px; z-index: 9999; display: none; font-weight: bold; border: 1px solid #fff; }
+    </style>
+</head>
+<body>
+    <div id="toast">Thông báo</div>
+
+    <!-- MÀN 1 -->
+    <div id="screen1" class="screen active">
+        <div class="glass-card">
+            <h1>💖 Bùi Đình Mạnh ❤️ Đồng Thanh Thảo 💖</h1>
+            <p>📅 22/04/2010 &nbsp;&nbsp; 💞 &nbsp;&nbsp; 📅 17/11/2010</p>
+            <p>💕 Yêu nhau từ ngày 10/04/2024</p>
+            <p style="font-size: 22px; color: #ffb3c6; font-weight: bold; margin-top: 5px;">❤️ Đã yêu được <span id="dayCounter">0</span> ngày ❤️</p>
+            <button id="btnStart">Ấn zo đây nì 👇</button>
+        </div>
+    </div>
+
+    <!-- MÀN 2: TIM -->
+    <div id="screen2" class="screen">
+        <div id="heartCanvasContainer"></div>
+        <div class="overlay-content">
+            <h1>Vợ yêu sẵn sàng chưa?</h1>
+            <div class="btn-wrapper">
+                <button class="btn-yes" onclick="goToStep(3)">RỒI 🥰</button>
+                <button class="btn-no" id="noBtn" onclick="moveNoBtn()">Chưa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÀN 3: KÝ TÊN -->
+    <div id="screen3" class="screen">
+        <h2 style="color:white; text-shadow: 0 0 5px #000;">✍️ Ký tên vào đây nè</h2>
+        <canvas id="signCanvas" width="350" height="180"></canvas>
+        <button id="btnDone">Viết xong rồi! →</button>
+    </div>
+
+    <!-- MÀN 4: THI TỰ LUẬN -->
+    <div id="screen4" class="screen">
+        <div class="exam-container" id="examContainer">
+            <!-- Sẽ được tạo bằng JS -->
+        </div>
+    </div>
+
+    <!-- MÀN 5: CHỜ CHẤM ĐIỂM -->
+    <div id="screen5" class="screen">
+        <div class="waiting-box">
+            <h1>💖 Nộp bài thành công! 💖</h1>
+            <p>Làm tốt lắm vk yêu! Đợi ck chấm bài nha ❤️</p>
+            <p style="font-size: 14px; color: #aaa; margin-top: 15px;">(Vui lòng giữ nguyên trang này. Ck sẽ gửi điểm ngay khi chấm xong!)</p>
+            <div class="score-display" id="scoreDisplay">
+                <div>Ck chấm xong rồi!</div>
+                <div id="finalScore">10/10</div>
+                <div style="font-size: 20px; margin-top: 15px; color: #ff4d6d;">💖 Xuất sắc! Yêu vk lắm! 💖</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ================================ JAVASCRIPT ================================ */
+        // ==========================================
+        // CẤU HÌNH TELEGRAM BOT
+        // ==========================================
+        const BOT_TOKEN = "8632203192:AAGDf0ccjZI-8InHSF_tvEK1Ti0K3aIWf7w";
+        const CHAT_ID = "8895608275";
+
+        // ==========================================
+        // 1. TÍNH TOÁN NGÀY
+        // ==========================================
+        const startDate = new Date(2024, 3, 10);
+        const today = new Date();
+        const diffTime = Math.abs(today - startDate);
+        document.getElementById('dayCounter').innerText = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // ==========================================
+        // 2. CHUYỂN MÀN HÌNH
+        // ==========================================
+        function switchScreen(id) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        document.getElementById('btnStart').addEventListener('click', () => {
+            switchScreen('screen2');
+            startParticleHeart();
+        });
+
+        // ==========================================
+        // 3. NÚT CHƯA CHẠY
+        // ==========================================
+        function moveNoBtn() {
+            const btn = document.getElementById('noBtn');
+            const x = Math.random() * (window.innerWidth - 120);
+            const y = Math.random() * (window.innerHeight - 60);
+            btn.style.left = x + 'px';
+            btn.style.top = y + 'px';
+            btn.style.position = 'fixed';
+            btn.style.width = '120px';
+        }
+
+        // ==========================================
+        // 4. HIỆU ỨNG TIM HẠT
+        // ==========================================
+        let heartAnimationId;
+        function startParticleHeart() {
+            const container = document.getElementById('heartCanvasContainer');
+            container.innerHTML = ''; 
+            const canvas = document.createElement('canvas');
+            container.appendChild(canvas);
+            const ctx = canvas.getContext('2d');
+            let w, h;
+            function resize() {
+                w = container.clientWidth; h = container.clientHeight;
+                canvas.width = w; canvas.height = h;
+            }
+            resize(); window.addEventListener('resize', resize);
+            const settings = { particles: { length: 300, duration: 2, velocity: 100, effect: -0.75, size: 20 } };
+            function createParticleImage(size) {
+                const c = document.createElement('canvas'); c.width = size; c.height = size;
+                const ct = c.getContext('2d');
+                ct.beginPath();
+                let t = -Math.PI;
+                const sc = size / 350;
+                function to(t) {
+                    const x = 160 * Math.pow(Math.sin(t), 3);
+                    const y = 130 * Math.cos(t) - 50 * Math.cos(2*t) - 20 * Math.cos(3*t) - 10 * Math.cos(4*t) + 25;
+                    return { x: size/2 + x * sc, y: size/2 - y * sc };
+                }
+                let p = to(t); ct.moveTo(p.x, p.y);
+                while (t < Math.PI) { t += 0.01; p = to(t); ct.lineTo(p.x, p.y); }
+                ct.closePath(); ct.fillStyle = "#ff417d"; ct.fill(); ct.strokeStyle = "#aa0033"; ct.lineWidth = 1; ct.stroke();
+                const img = new Image(); img.src = c.toDataURL(); return img;
+            }
+            const particleImage = createParticleImage(settings.particles.size);
+            class Particle {
+                constructor() { this.x = 0; this.y = 0; this.vx = 0; this.vy = 0; this.ax = 0; this.ay = 0; this.age = 0; }
+                init(x, y, vx, vy) { this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.ax = vx * settings.particles.effect; this.ay = vy * settings.particles.effect; this.age = 0; }
+                update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.vx += this.ax * dt; this.vy += this.ay * dt; this.age += dt; }
+                draw(context, image) {
+                    const ease = Math.max(0, 1 - this.age / settings.particles.duration);
+                    const size = image.width * ease;
+                    context.globalAlpha = ease * 0.9;
+                    context.drawImage(image, this.x - size / 2, this.y - size / 2, size, size);
+                }
+            }
+            class ParticlePool {
+                constructor(length) { this.particles = new Array(length); for (let i = 0; i < length; i++) this.particles[i] = new Particle(); this.firstActive = 0; this.firstFree = 0; this.length = length; }
+                add(x, y, vx, vy) { this.particles[this.firstFree].init(x, y, vx, vy); this.firstFree++; if (this.firstFree == this.length) this.firstFree = 0; if (this.firstActive == this.firstFree) this.firstActive++; if (this.firstActive == this.length) this.firstActive = 0; }
+                update(dt) { for (let i = 0; i < this.length; i++) this.particles[i].update(dt); while (this.particles[this.firstActive].age >= settings.particles.duration && this.firstActive != this.firstFree) { this.firstActive++; if (this.firstActive == this.length) this.firstActive = 0; } }
+                draw(context, image) { let i = this.firstActive; while (i != this.firstFree) { this.particles[i].draw(context, image); i++; if (i == this.length) i = 0; } }
+            }
+            function pointOnHeart(t) { return { x: 160 * Math.pow(Math.sin(t), 3), y: 130 * Math.cos(t) - 50 * Math.cos(2*t) - 20 * Math.cos(3*t) - 10 * Math.cos(4*t) + 25 }; }
+            const pool = new ParticlePool(settings.particles.length);
+            const rate = settings.particles.length / settings.particles.duration;
+            let time = 0;
+            function render() {
+                heartAnimationId = requestAnimationFrame(render);
+                const now = new Date().getTime() / 1000;
+                const dt = Math.min(0.05, now - (time || now)); time = now;
+                ctx.fillStyle = 'rgba(13, 13, 26, 0.4)'; ctx.fillRect(0, 0, w, h);
+                const amount = rate * dt;
+                for (let i = 0; i < amount; i++) {
+                    const pos = pointOnHeart(Math.PI - 2 * Math.PI * Math.random());
+                    const len = Math.sqrt(pos.x * pos.x + pos.y * pos.y);
+                    const speed = settings.particles.velocity;
+                    const vx = (pos.x / (len || 1)) * speed; const vy = (pos.y / (len || 1)) * speed;
+                    pool.add(w / 2 + pos.x, h / 2 - pos.y, vx, -vy);
+                }
+                pool.update(dt); pool.draw(ctx, particleImage);
+            }
+            render();
+        }
+
+        function goToStep(step) { 
+            if(heartAnimationId) cancelAnimationFrame(heartAnimationId);
+            switchScreen('screen' + step); 
+            if(step === 3) initCanvas(); 
+            if(step === 4) renderExam();
+        }
+
+        // ==========================================
+        // 5. CHỮ KÝ (Lưu ảnh)
+        // ==========================================
+        let signatureBase64 = "";
+        function initCanvas() {
+            const canvas = document.getElementById('signCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.strokeStyle = '#ff4d6d'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+            let drawing = false; let hasDrawn = false;
+            function getPos(e) { const rect = canvas.getBoundingClientRect(); return { x: (e.clientX || e.touches[0].clientX) - rect.left, y: (e.clientY || e.touches[0].clientY) - rect.top }; }
+            function start(e) { e.preventDefault(); drawing = true; hasDrawn = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); document.getElementById('btnDone').style.display = 'block'; }
+            function draw(e) { e.preventDefault(); if(!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }
+            function stop(e) { e.preventDefault(); drawing = false; }
+            canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stop);
+            canvas.addEventListener('touchstart', start, { passive: false }); canvas.addEventListener('touchmove', draw, { passive: false }); canvas.addEventListener('touchend', stop, { passive: false });
+            document.getElementById('btnDone').onclick = function() {
+                if(!hasDrawn) return alert("Vợ yêu phải ký tên vô đây cái đã!");
+                signatureBase64 = canvas.toDataURL('image/png'); // Lưu ảnh chữ ký
+                switchScreen('screen4'); 
+                renderExam(); // Bắt đầu bài thi
+            };
+        }
+
+        // ==========================================
+        // 6. CÂU HỎI & HÀM LÀM BÀI
+        // ==========================================
+        const questions = [
+            {
+                id: 1, code: `program CauHoi1;\nvar\n  a, b: integer;\n  x: real;\n  ten: string;\nbegin\n  a := 12;\n  b := 8;\n  x := 4.5;\n  ten := 'Le Van C';\nend.`,
+                answer_label: "a: integer, 12\nb: integer, 8\nx: real, 4.5\nten: string, Le Van C"
+            },
+            { id: 2, code: `program CauHoi2;\nvar\n  Tuoi: integer;\n  DiemTB: real;\n  DauLop: boolean;\nbegin\n  Tuoi := 16;\n  DiemTB := 8.2;\n  DauLop := true;\nend.`, answer_label: "Tuoi: integer, 16\nDiemTB: real, 8.2\nDauLop: boolean, true" },
+            { id: 3, code: `program CauHoi3;\nvar\n  N: integer;\n  KyTu: char;\nbegin\n  N := 5;\n  N := N + 10;\n  KyTu := 'B';\nend.`, answer_label: "N: integer, 15\nKyTu: char, 'B'" },
+            { id: 4, code: `program CauHoi4;\nvar\n  DaiHCN, RongHCN: integer;\n  DienTich: integer;\n  KetQua: string;\nbegin\n  DaiHCN := 6;\n  RongHCN := 4;\n  DienTich := DaiHCN * RongHCN;\n  KetQua := 'Hinh chu nhat';\nend.`, answer_label: "DaiHCN: integer, 6\nRongHCN: integer, 4\nDienTich: integer, 24\nKetQua: string, 'Hinh chu nhat'" },
+            { id: 5, code: `program CauHoi5;\nvar\n  SoHS: integer;\n  TiLe: real;\n  ThongBao: string;\n  DatChuan: boolean;\nbegin\n  SoHS := 40;\n  TiLe := 0.85;\n  ThongBao := 'Dat yeu cau';\n  DatChuan := false;\nend.`, answer_label: "SoHS: integer, 40\nTiLe: real, 0.85\nThongBao: string, 'Dat yeu cau'\nDatChuan: boolean, false" },
+            { id: 6, code: `program CauHoi6;\nvar\n  A, B: integer;\n  TongA: integer;\nbegin\n  A := 15;\n  B := 7;\n  TongA := A + B;\nend.`, answer_label: "A: integer, 15\nB: integer, 7\nTongA: integer, 22" },
+            { id: 7, code: `program CauHoi7;\nvar\n  Gia: real;\n  SoLuong: integer;\n  ThanhTien: real;\nbegin\n  Gia := 12000.5;\n  SoLuong := 3;\n  ThanhTien := Gia * SoLuong;\nend.`, answer_label: "Gia: real, 12000.5\nSoLuong: integer, 3\nThanhTien: real, 36001.5" },
+            { id: 8, code: `program CauHoi8;\nvar\n  X: integer;\nbegin\n  X := 2;\n  X := X * 5;\n  X := X - 3;\nend.`, answer_label: "X: integer, 7" },
+            { id: 9, code: `program CauHoi9;\nvar\n  HoTen: string;\n  Diem1, Diem2: real;\n  DTB: real;\nbegin\n  HoTen := 'Pham Thi D';\n  Diem1 := 7.5;\n  Diem2 := 8.5;\n  DTB := (Diem1 + Diem2) / 2;\nend.`, answer_label: "HoTen: string, 'Pham Thi D'\nDiem1: real, 7.5\nDiem2: real, 8.5\nDTB: real, 8.0" },
+            { id: 10, code: `program CauHoi10;\nvar\n  KyTu1, KyTu2: char;\n  DungHang: boolean;\nbegin\n  KyTu1 := 'X';\n  KyTu2 := 'Y';\n  DungHang := false;\nend.`, answer_label: "KyTu1: char, 'X'\nKyTu2: char, 'Y'\nDungHang: boolean, false" },
+            { id: 11, code: `program CauHoi11;\nvar\n  Nam: integer;\n  TenTruong: string;\n  DangHoc: boolean;\nbegin\n  Nam := 2026;\n  TenTruong := 'THPT Nguyen Trai';\n  DangHoc := true;\nend.`, answer_label: "Nam: integer, 2026\nTenTruong: string, 'THPT Nguyen Trai'\nDangHoc: boolean, true" }
+        ];
+
+        function renderExam() {
+            // Kích hoạt chế độ toàn màn hình & Chống thoát
+            requestFullscreen();
+            window.addEventListener('beforeunload', handleBeforeUnload);
+            // Cảnh báo khi người dùng bấm F5
+            window.addEventListener('keydown', function(e) {
+                if (e.key === "F5" || (e.ctrlKey && e.key === "r")) {
+                    e.preventDefault();
+                    incrementReloadCount();
+                }
+            });
+
+            const container = document.getElementById('examContainer');
+            container.innerHTML = "";
+            questions.forEach((q, index) => {
+                const div = document.createElement('div');
+                div.className = 'question-box';
+                div.innerHTML = `
+                    <h4>Câu ${q.id}</h4>
+                    <div class="code-block">${q.code}</div>
+                    <div class="answer-grid">
+                        <div class="answer-group" style="width:100%;">
+                            <label>Đáp án của em:</label>
+                            <textarea data-q="${q.id}" placeholder="Nhập kết quả..." style="background:#1e1e1e; border:1px solid #555; border-radius:4px; padding:4px 8px; color:white; width:100%; font-size:13px; font-family:monospace; resize:vertical; min-height:60px;"></textarea>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            
+            const submitBtn = document.createElement('button');
+            submitBtn.id = 'submitExamBtn';
+            submitBtn.innerText = 'Nộp bài thi 😍';
+            submitBtn.onclick = submitExam;
+            container.appendChild(submitBtn);
+        }
+
+        // ==========================================
+        // 7. BỘ ĐẾM GIAN LẬN (Mới)
+        // ==========================================
+        let exitWarningTriggered = false;
+        let totalExitCount = 0;
+        let totalReloadCount = 0;
+
+        // Đếm số lần rời trang (Tắt tab, Back, F5)
+        function handleBeforeUnload(e) {
+            if (!exitWarningTriggered) {
+                e.preventDefault();
+                e.returnValue = '';
+                exitWarningTriggered = true;
+                totalExitCount++; // Tăng biến đếm
+                alert("⚠️ Bạn đã rời khỏi trang thi! Sẽ ghi nhận 1 lần gian lận.");
+                // Không reset ngay, chỉ ghi nhận hành vi
+                setTimeout(() => { exitWarningTriggered = false; }, 1000);
+            }
+        }
+
+        // Đếm riêng số lần bấm F5 hoặc Reload
+        function incrementReloadCount() {
+            totalReloadCount++;
+            alert("⚠️ Không được phép tải lại trang! Đã ghi nhận 1 lần.");
+        }
+
+        function requestFullscreen() {
+            const el = document.documentElement;
+            if (el.requestFullscreen) el.requestFullscreen().catch(err => {});
+            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+            else if (el.msRequestFullscreen) el.msRequestFullscreen();
+        }
+
+        // ==========================================
+        // 8. NỘP BÀI & LẮNG NGHE ĐIỂM
+        // ==========================================
+        let isPolling = false; 
+        let lastUpdateId = 0;
+
+        async function submitExam() {
+            const textareas = document.querySelectorAll('.answer-grid textarea');
+            let resultDetail = "--- BÀI LÀM CỦA VỢ YÊU ---\n\n";
+            textareas.forEach(ta => {
+                const qId = ta.dataset.q;
+                const userAns = ta.value.trim();
+                resultDetail += `- Câu ${qId}:\n` + userAns + `\n------------------------------\n`;
+            });
+
+            // Gửi Telegram
+            document.getElementById('toast').style.display = 'block';
+            document.getElementById('toast').innerText = "⏳ Đang gửi bài làm...";
+            
+            // Thêm thông tin gian lận vào báo cáo
+            const cheatLog = `\n\n📊 BÁO CÁO HÀNH VI:\n- Số lần rời trang (Thoát tab/Back): ${totalExitCount} lần\n- Số lần nhấn F5/Reload: ${totalReloadCount} lần`;
+            
+            const msg = `💖 Vợ yêu vừa nộp bài nè! 💖\n\n` + resultDetail + `\n\n📎 Ảnh chữ ký (Base64):\n${signatureBase64}` + cheatLog;
+            
+            try {
+                const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: CHAT_ID, text: msg })
+                });
+                const data = await resp.json();
+                if(!data.ok) throw new Error(data.description);
+                document.getElementById('toast').innerText = "✅ Đã gửi bài!";
+            } catch (e) {
+                document.getElementById('toast').innerText = "❌ Lỗi gửi: " + e.message;
+            }
+            setTimeout(() => document.getElementById('toast').style.display = 'none', 3000);
+
+            // Chuyển màn hình chờ và bắt đầu lắng nghe điểm
+            switchScreen('screen5');
+            startListeningForScore();
+        }
+
+        async function startListeningForScore() {
+            if (isPolling) return;
+            isPolling = true;
+            
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const finalScore = document.getElementById('finalScore');
+
+            async function poll() {
+                try {
+                    const url = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}&timeout=30`;
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data.ok && data.result.length > 0) {
+                        for (const update of data.result) {
+                            lastUpdateId = update.update_id;
+                            const msg = update.message;
+                            
+                            if (msg && msg.text && msg.text.startsWith('/diem')) {
+                                const parts = msg.text.split(' ');
+                                if (parts.length > 1) {
+                                    const score = parts[1];
+                                    scoreDisplay.style.display = 'block';
+                                    finalScore.innerText = score + '/10';
+                                    isPolling = false;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Lỗi khi lấy điểm:", error);
+                }
+
+                if (isPolling) {
+                    setTimeout(poll, 3000);
+                }
+            }
+            poll();
+        }
+    </script>
+</body>
+</html>
